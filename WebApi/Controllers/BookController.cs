@@ -5,7 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.BookOperation.CreateBook;
+using WebApi.BookOperation.DeleteBookCommand;
+using WebApi.BookOperation.GetBookDetail;
 using WebApi.BookOperation.GetBooks;
+using WebApi.BookOperation.UpdateBook;
 using WebApi.DbOperations;
 using static WebApi.BookOperation.CreateBook.CreateBookCommand;
 
@@ -84,10 +87,25 @@ namespace WebApi.Controllers
         }
 
       [HttpGet("{id}")]
-        public Book GetById(int id)
+        public IActionResult GetById(int id)
         {
-            var book = _context.Books.Where(x => x.Id == id).SingleOrDefault();
-            return book;
+            BooDetailViewModel result;
+            try
+            {
+                GetBookdetailQuery query = new GetBookdetailQuery(_context);
+                query.BookId = id;
+             result=   query.Handle();
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
+
+
+           
+           
+            return Ok(result);
         }
 
 
@@ -116,18 +134,25 @@ namespace WebApi.Controllers
 
 
         [HttpPut("{id}")]
-        public IActionResult UpdateBook(int id,[FromBody] Book updatebook)
+        public IActionResult UpdateBook(int id,[FromBody] UpdateBookModel updatebook)
         {
 
-            var book = _context.Books.SingleOrDefault(x => x.Id == updatebook.Id);
+            try
+            {
+                UptadeBookCommand command = new UptadeBookCommand(_context);
+                command.BookId = id;
+                command.Model = updatebook;
+                command.Handle();
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
+            
+            
            
-            if (book == null)
-                return BadRequest();
-            book.GenerateId = updatebook.GenerateId != default ? updatebook.GenerateId : book.GenerateId;
-            book.PageCount = updatebook.PageCount != default ? updatebook.PageCount : book.PageCount;
-            book.BublishDate = updatebook.BublishDate != default ? updatebook.BublishDate : book.BublishDate;
-            book.Title = updatebook.Title != default ? updatebook.Title : book.Title;
-            _context.SaveChanges();
+
             return Ok();
         }
 
@@ -136,12 +161,21 @@ namespace WebApi.Controllers
     
         public IActionResult DeleteBook(int id)
         {
-         
-            var book = _context.Books.SingleOrDefault(x => x.Id == id);
-            if (book == null)
-                return BadRequest();
-            _context.Books.Remove(book);
-            _context.SaveChanges();
+
+            try
+            {
+                DeleteBookCommand command = new DeleteBookCommand(_context);
+                command.BookId = id;
+                command.Handle();
+
+
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
+
             return Ok();
         }
 
